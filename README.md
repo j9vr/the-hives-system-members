@@ -1,111 +1,202 @@
 <!DOCTYPE html>
-<html lang="en">
+<html>
 <head>
-<meta charset="UTF-8">
-<title>DXRP Hive System</title>
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>The Hive System</title>
 <style>
-    body { margin:0; font-family:Arial, sans-serif; background:#000; color:#fff; }
-    .center { display:flex; flex-direction:column; justify-content:center; align-items:center; height:100vh; }
-    input, button, textarea { padding:10px; margin:5px; border-radius:5px; border:none; }
-    button { cursor:pointer; }
-    #siteContent { padding:20px; }
-    #ownerPanel {
-        display:none; 
-        position:fixed; 
-        top:0; left:0; 
-        width:100%; height:100%;
-        background:rgba(0,0,0,0.9); 
+    body { background:#000; color:white; font-family:Arial; padding:20px; }
+    h1 { text-align:center; color:#4da3ff; text-shadow:0 0 10px #0088ff; }
+
+    .panel {
+        background:#0a1a26;
         padding:20px;
-        overflow:auto;
+        margin-top:20px;
+        border-radius:10px;
+        border:1px solid #1e3a5f;
+        box-shadow:0 0 15px #0044ff55;
     }
-    #ownerPanel textarea {
-        width:100%;
-        height:60vh;
-        background:#111;
-        color:#0f0;
-        font-family:monospace;
+
+    .member {
+        background:#0f2438;
+        padding:10px;
+        margin-top:10px;
+        border-radius:8px;
+        border:1px solid #1c4b7f;
+        font-size:18px;
     }
+
+    button {
+        background:#4da3ff;
+        border:none;
+        padding:10px 20px;
+        font-size:16px;
+        border-radius:5px;
+        cursor:pointer;
+        margin-top:10px;
+    }
+    button:hover { background:#6db3ff; }
+
+    .remove-btn {
+        float:right;
+        background:red;
+        color:white;
+        border:none;
+        padding:5px 10px;
+        border-radius:4px;
+        cursor:pointer;
+    }
+    .remove-btn:hover { background:#ff4f4f; }
+
+    input, textarea {
+        padding:10px;
+        width:90%;
+        border-radius:5px;
+        border:none;
+        font-size:16px;
+        background:#0f2438;
+        color:white;
+    }
+
+    textarea { height:200px; resize:vertical; }
 </style>
 </head>
 <body>
 
-<!-- LOGIN SCREEN -->
-<div id="loginScreen" class="center">
-    <h1>Login</h1>
-    <input id="usernameInput" type="text" placeholder="Enter username">
+<h1>🐝 The Hive System</h1>
+
+<!-- LOGIN PANEL -->
+<div id="loginPanel" class="panel">
+    <h2>Owner Login</h2>
+    <input id="username" placeholder="Username"><br><br>
+    <input id="password" placeholder="Password" type="password"><br><br>
     <button onclick="login()">Login</button>
 </div>
 
-<!-- MAIN SITE -->
-<div id="mainSite" style="display:none;">
-    <div style="padding:20px; background:#111;">
-        <h2>DXRP Hive System</h2>
-        <button id="ownerBtn" style="display:none;" onclick="openOwnerPanel()">Owner Panel</button>
-        <button onclick="logout()">Logout</button>
-    </div>
+<!-- OWNER PANEL -->
+<div id="ownerPanel" class="panel" style="display:none;">
+    <h2>Owner Panel</h2>
 
-    <!-- Editable website content -->
-    <div id="siteContent"></div>
+    <!-- MEMBER SECTION -->
+    <h3>Add Member</h3>
+    <input id="memberName" placeholder="Enter member name"><br><br>
+    <button onclick="addMember()">Add Member</button>
+
+    <h3 style="margin-top:30px;">Members</h3>
+    <div id="memberList"></div>
+
+    <!-- LIVE CODE EDITOR -->
+    <h3 style="margin-top:30px;">Edit Website Code</h3>
+    <textarea id="editor" placeholder="Type HTML/JS/CSS here..."></textarea><br>
+    <button onclick="runCode()">Run & Save Code</button>
+
+    <br><br>
+    <button onclick="logout()" style="background:#ff3333; color:white;">Logout</button>
 </div>
 
-<!-- OWNER EDITOR -->
-<div id="ownerPanel">
-    <h2>Owner Website Editor</h2>
-    <textarea id="editor"></textarea><br>
-    <button onclick="saveChanges()">Save Changes</button>
-    <button onclick="closeOwnerPanel()">Close</button>
+<!-- PUBLIC VIEW -->
+<div id="preview" style="margin-top:20px; border:1px solid #0044ff; padding:10px; border-radius:10px;">
+    <p style="color:#6db3ff;">The Hive live code will appear here.</p>
 </div>
 
 <script>
-// Default site content if none saved yet
-const defaultContent = `
-<h1>Welcome to The Hive</h1>
-<p>This is the official DXRP Hive website.</p>
-<p>Edit this using the Owner Panel.</p>
-`;
-
-// Load saved site content
-document.getElementById("siteContent").innerHTML = 
-    localStorage.getItem("siteContent") || defaultContent;
-
-// Owner username (you can change it)
-const OWNER = "j9vr";
+/* --------------------------
+   LOGIN SYSTEM
+--------------------------- */
+const CORRECT_USERNAME = "j9vr";
+const CORRECT_PASSWORD = "dxhive";
 
 function login() {
-    const user = document.getElementById("usernameInput").value.trim();
-    if (!user) return alert("Enter a username!");
+    const user = document.getElementById("username").value.trim();
+    const pass = document.getElementById("password").value.trim();
 
-    localStorage.setItem("currentUser", user);
-
-    document.getElementById("loginScreen").style.display = "none";
-    document.getElementById("mainSite").style.display = "block";
-
-    if (user === OWNER) {
-        document.getElementById("ownerBtn").style.display = "inline-block";
+    if (!user || !pass) { alert("Enter username and password."); return; }
+    if (user !== CORRECT_USERNAME || pass !== CORRECT_PASSWORD) {
+        alert("Incorrect username or password.");
+        return;
     }
+
+    localStorage.setItem("loggedIn", "yes");
+    showOwnerPanel();
 }
 
 function logout() {
-    localStorage.removeItem("currentUser");
+    localStorage.removeItem("loggedIn");
     location.reload();
 }
 
-function openOwnerPanel() {
+function showOwnerPanel() {
+    document.getElementById("loginPanel").style.display = "none";
     document.getElementById("ownerPanel").style.display = "block";
-    document.getElementById("editor").value = 
-        document.getElementById("siteContent").innerHTML;
+    showMembers();
+    // Load saved code into editor if exists
+    const saved = localStorage.getItem("siteCode");
+    if (saved) document.getElementById("editor").value = saved;
 }
 
-function closeOwnerPanel() {
-    document.getElementById("ownerPanel").style.display = "none";
+/* Auto-login if previously logged in */
+if (localStorage.getItem("loggedIn") === "yes") { showOwnerPanel(); }
+
+/* --------------------------
+   MEMBER SYSTEM
+--------------------------- */
+let members = JSON.parse(localStorage.getItem("members")) || [];
+
+function showMembers() {
+    const list = document.getElementById("memberList");
+    list.innerHTML = "";
+    members.forEach((name, i) => {
+        list.innerHTML += `
+            <div class="member">
+                ${name}
+                <button class="remove-btn" onclick="removeMember(${i})">Remove</button>
+            </div>
+        `;
+    });
 }
 
-function saveChanges() {
-    const updated = document.getElementById("editor").value;
-    localStorage.setItem("siteContent", updated);
-    document.getElementById("siteContent").innerHTML = updated;
-    alert("Changes saved!");
+function addMember() {
+    const name = document.getElementById("memberName").value.trim();
+    if (!name) { alert("Enter a name."); return; }
+    members.push(name);
+    localStorage.setItem("members", JSON.stringify(members));
+    showMembers();
+    document.getElementById("memberName").value = "";
+}
+
+function removeMember(i) {
+    members.splice(i, 1);
+    localStorage.setItem("members", JSON.stringify(members));
+    showMembers();
+}
+
+/* --------------------------
+   LIVE CODE EDITOR
+--------------------------- */
+function runCode() {
+    const code = document.getElementById("editor").value;
+    // Save code so others can see it
+    localStorage.setItem("siteCode", code);
+    renderCode(code);
+}
+
+// Function to render code to preview (for everyone)
+function renderCode(code) {
+    const preview = document.getElementById("preview");
+    preview.innerHTML = "";
+    try {
+        const script = document.createElement("script");
+        script.type = "text/javascript";
+        script.text = code;
+        preview.innerHTML = code;
+        preview.appendChild(script);
+    } catch(e) {
+        preview.innerHTML = "<p style='color:red;'>Error in code: " + e.message + "</p>";
+    }
+}
+
+// On page load, render saved code for public view
+window.onload = function() {
+    const saved = localStorage.getItem("siteCode");
+    if (saved) renderCode(saved);
 }
 </script>
 
